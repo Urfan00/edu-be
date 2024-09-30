@@ -47,6 +47,7 @@ THIRD_PARTY_APPS = [
     "django_filters",
     "corsheaders",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "rest_framework_swagger",
     "drf_yasg",
     "django_cleanup.apps.CleanupConfig",
@@ -153,7 +154,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+        "identity.authentication.ActiveTokenJWTAuthentication",
+        # "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",

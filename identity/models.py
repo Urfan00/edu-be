@@ -1,9 +1,11 @@
 import uuid
 from django.contrib.auth import get_backends
-from django.contrib.auth.models import AbstractUser, Permission
+from django.contrib.auth.models import AbstractBaseUser, Permission
 from django.core.validators import RegexValidator, URLValidator
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
 
 
 from identity.managers import CustomUserManager
@@ -48,7 +50,7 @@ class Role(TimeStampedModel):
         return self.name
 
 
-class User(AbstractUser):
+class User(AbstractBaseUser):
     class GenderChoices(models.TextChoices):
         MALE = "M", _("Male")
         FEMALE = "F", _("Female")
@@ -61,11 +63,20 @@ class User(AbstractUser):
         OPERATOR = "operator", _("Operator")
         DIRECTOR = "director", _("Director")
 
-    username = None
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
         editable=False
+    )
+    first_name = models.CharField(
+        _("first name"),
+        max_length=150,
+        blank=True,
+    )
+    last_name = models.CharField(
+        _("last name"),
+        max_length=150,
+        blank=True,
     )
     father_name = models.CharField(
         verbose_name=_("Father name"),
@@ -177,11 +188,38 @@ class User(AbstractUser):
         related_name="users",
         verbose_name=_("Roles"),
     )
+    is_staff = models.BooleanField(
+        _("staff status"),
+        default=False,
+        help_text=_("Designates whether the user can log into this admin site."),
+    )
+    is_active = models.BooleanField(
+        _("active"),
+        default=True,
+        help_text=_(
+            "Designates whether this user should be treated as active. "
+            "Unselect this instead of deleting accounts."
+        ),
+    )
+    is_superuser = models.BooleanField(
+        verbose_name=_("Superuser"),
+        default=False,
+        help_text=_("Designates whether this user has all permissions.")
+    )
+    date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
+
+    def has_perm(self, perm, obj=None):
+        """Return True if the user is a superuser, otherwise False."""
+        return self.is_superuser
+
+    def has_module_perms(self, app_label):
+        """Return True if the user has permissions for the app."""
+        return self.is_superuser
 
     class Meta:
         verbose_name = _("User")
@@ -208,3 +246,39 @@ class User(AbstractUser):
         return only permissions matching this object.
         """
         return _user_get_permissions(self, obj, "role")
+
+
+class AccessToken(models.Model):
+    jti = models.CharField(
+        verbose_name=_("JTI"),
+        max_length=255,
+        unique=True
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="access_tokens",
+        verbose_name=_("User")
+    )
+    token = models.TextField(
+        verbose_name=_("Token"),
+    )
+    created_at = models.DateTimeField(
+        verbose_name=_("Created at"),
+    )
+    expires_at = models.DateTimeField(
+        verbose_name=_("Expires at"),
+    )
+    is_active = models.BooleanField(
+        verbose_name=_("Active"),
+        default=True
+    )
+
+    class Meta:
+        app_label = "token_blacklist"
+        verbose_name = _("Access token")
+        verbose_name_plural = _("Access tokens")
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.jti}"

@@ -1,8 +1,10 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Permission
-from identity.models import User, Role
-from django.utils.translation import gettext_lazy as _
+from identity.models import AccessToken, User, Role
+from django.utils import timezone
+from django.utils.translation import ngettext_lazy, gettext_lazy as _
+
 
 # Register Permission model to admin
 @admin.register(Permission)
@@ -32,7 +34,7 @@ class UserAdmin(BaseUserAdmin):
             'fields': ('instagram', 'facebook', 'twitter', 'github', 'youtube', 'linkedin'),
             'classes': ['collapse']
         }),
-        (_('Roles and Permissions'), {'fields': ('roles', 'user_permissions')}),
+        (_('Roles and Permissions'), {'fields': ('roles', )}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
         (_('Status'), {'fields': ('first_time_login', 'is_active', 'is_staff', 'is_superuser')}),
     )
@@ -50,10 +52,10 @@ class UserAdmin(BaseUserAdmin):
     )
 
     # Fields to be displayed in the list view
-    list_display = ['id', 'email', 'first_name', 'last_name', 'user_type', 'is_staff', 'first_time_login']
+    list_display = ['id', 'email', 'first_name', 'last_name', 'user_type']
     
     # Fields to filter by in the list view
-    list_filter = ['is_staff', 'is_superuser', 'is_active', 'user_type', 'first_time_login']
+    list_filter = ['is_superuser', 'is_staff', 'is_active', 'user_type', 'first_time_login']
 
     # Add search functionality for these fields
     search_fields = ['email', 'first_name', 'last_name', 'passport_id', 'phone_number']
@@ -65,6 +67,45 @@ class UserAdmin(BaseUserAdmin):
 
     # Field used to identify users for login
     ordering = ['email']
-    filter_horizontal = ['groups', 'user_permissions']
 
     readonly_fields = ['id', 'last_login', 'date_joined']
+
+
+@admin.register(AccessToken)
+class AccessTokenAdmin(admin.ModelAdmin):
+    actions = ("action_delete_expired_tokens",)
+    list_display = (
+        "jti",
+        "user",
+        "created_at",
+        "expires_at",
+        "is_active"
+    )
+    list_display_links = list_display
+    list_filter = ("is_active",)
+    search_fields = ("jti",)
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    @admin.action(description=_("Delete selected expired tokens"))
+    def action_delete_expired_tokens(self, request, queryset):
+        expired_tokens = queryset.filter(expires_at__lt=timezone.now())
+        count = expired_tokens.count()
+
+        expired_tokens.delete()
+
+        message = ngettext_lazy(
+            "Successfully deleted {count} expired token.",
+            "Successfully deleted {count} expired tokens.",
+            count
+        ).format(count=count)
+
+        self.message_user(request, message, level=messages.SUCCESS)
+

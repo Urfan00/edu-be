@@ -1,20 +1,20 @@
 from django.contrib.auth.models import Permission
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_decode
 from django.utils.translation import gettext_lazy as _
 
 from drf_yasg.utils import swagger_auto_schema
 
 from rest_framework import viewsets, status, generics, permissions
 from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 
 from identity.models import User, Role
 from identity.serializers import (
     ChangePasswordSerializer,
     CustomTokenObtainPairSerializer,
+    CustomTokenRefreshSerializer,
     SetNewPasswordSerializer,
+    TokenRefreshResponseSerializer,
     UserSerializer,
     UserCreateUpdateSerializer,
     RoleSerializer,
@@ -61,6 +61,21 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             "along with user details to prove the authentication of those credentials."
         ),
         responses={status.HTTP_200_OK: TokenObtainPairResponseSerializer}
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    serializer_class = CustomTokenRefreshSerializer
+
+    @swagger_auto_schema(
+        tags=["JWT Authentication"],
+        operation_description=(
+            "Takes a refresh type JSON web token and returns an access type JSON web "
+            "token if the refresh token is valid."
+        ),
+        responses={status.HTTP_200_OK: TokenRefreshResponseSerializer}
     )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)

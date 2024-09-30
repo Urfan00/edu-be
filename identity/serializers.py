@@ -1,10 +1,17 @@
 from rest_framework import serializers
 from django.contrib.auth.models import Permission
 from django.utils.translation import gettext_lazy as _
-from identity.models import User, Role
+from identity.models import (
+    User,
+    Role,
+    AccessToken as AccessTokenModel
+)
 
 from rest_framework.exceptions import ValidationError
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+from rest_framework_simplejwt.utils import datetime_from_epoch
 
 
 # Serializer for Permission Model (Many-to-Many in Role)
@@ -147,14 +154,95 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
         user = self.user
+
+        # Blacklist old refresh tokens
+        self._blacklist_old_refresh_tokens(user, data.get("refresh"))
+        # Deactivate old access tokens (mark them as inactive)
+        self._deactivate_old_access_tokens(user)
+        # Save the new access token in the database
+        self._save_new_access_token(user, data.get("access"))
+
+        # Add the user information to the response data
         data["user"] = UserJwtSerializer(user).data
         return data
+
+    def _blacklist_old_refresh_tokens(self, user, current_refresh_token):
+        if current_refresh_token:
+            try:
+                current_refresh_jti = RefreshToken(
+                    current_refresh_token).get("jti")
+                # Find all outstanding tokens for the user, excluding the current one
+                previous_tokens = OutstandingToken.objects.filter(
+                    user=user).exclude(jti=current_refresh_jti)
+                # Bulk create blacklisted tokens for all previous tokens
+                BlacklistedToken.objects.bulk_create(
+                    [BlacklistedToken(token=token)
+                     for token in previous_tokens],
+                    ignore_conflicts=True
+                )
+            except Exception as e:
+                raise ValueError(f"Error blacklisting old refresh tokens: {e}")
+
+    def _deactivate_old_access_tokens(self, user):
+        AccessTokenModel.objects.filter(
+            user=user, is_active=True).update(is_active=False)
+
+    def _save_new_access_token(self, user, current_access_token):
+        if current_access_token:
+            try:
+                # Parse the current access token
+                access_token = AccessToken(current_access_token)
+                # Create a new record in the AccessToken model
+                AccessTokenModel.objects.create(
+                    user=user,
+                    jti=access_token["jti"],
+                    token=current_access_token,
+                    created_at=datetime_from_epoch(access_token["iat"]),
+                    expires_at=datetime_from_epoch(access_token["exp"]),
+                )
+            except Exception as e:
+                raise ValueError(f"Error saving access token: {e}")
+
+
+class CustomTokenRefreshSerializer(TokenRefreshSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        # Save the new access token in the database
+        self._save_new_access_token(data.get("access"))
+        return data
+
+    def _save_new_access_token(self, new_access_token):
+        if new_access_token:
+            try:
+                # Parse the new access token
+                access_token = AccessToken(new_access_token)
+                user = User.objects.get(id=access_token["user_id"])
+                # Create a new record in the AccessToken model
+                AccessTokenModel.objects.create(
+                    user=user,
+                    jti=access_token["jti"],
+                    token=new_access_token,
+                    created_at=datetime_from_epoch(access_token["iat"]),
+                    expires_at=datetime_from_epoch(access_token["exp"]),
+                )
+            except Exception as e:
+                raise ValueError(f"Error saving new access token: {e}")
 
 
 class TokenObtainPairResponseSerializer(serializers.Serializer):
     refresh = serializers.CharField()
     access = serializers.CharField()
     user = UserJwtSerializer()
+
+    def create(self, validated_data):
+        raise NotImplementedError()
+
+    def update(self, instance, validated_data):
+        raise NotImplementedError()
+
+
+class TokenRefreshResponseSerializer(serializers.Serializer):
+    access = serializers.CharField()
 
     def create(self, validated_data):
         raise NotImplementedError()
