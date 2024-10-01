@@ -1,5 +1,5 @@
 from django.urls import path, include
-from identity.views import ChangePasswordView, CustomTokenObtainPairView, CustomTokenRefreshView, PermissionViewSet, ResetPasswordView, UserViewSet, RoleViewSet
+from identity.views import ChangePasswordView, CustomTokenObtainPairView, CustomTokenRefreshView, PermissionViewSet, ResetPasswordView, UserBulkUploadView, UserViewSet, RoleViewSet
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -15,4 +15,5 @@ urlpatterns = [
     path("token/refresh/", CustomTokenRefreshView.as_view(), name="token_refresh"),
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('reset-password/', ResetPasswordView.as_view(), name='reset-password'),
+    path('bulk-create/', UserBulkUploadView.as_view(), name='user-bulk-upload'),
 ]

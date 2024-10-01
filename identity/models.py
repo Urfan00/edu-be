@@ -132,42 +132,36 @@ class User(AbstractBaseUser):
         verbose_name=_("Instagram Profile"),
         blank=True,
         null=True,
-        validators=[URLValidator()],
         help_text=_("Enter a valid URL for the Instagram profile.")
     )
     facebook = models.URLField(
         verbose_name=_("Facebook Profile"),
         blank=True,
         null=True,
-        validators=[URLValidator()],
         help_text=_("Enter a valid URL for the Facebook profile.")
     )
     twitter = models.URLField(
         verbose_name=_("Twitter Profile"),
         blank=True,
         null=True,
-        validators=[URLValidator()],
         help_text=_("Enter a valid URL for the Twitter profile.")
     )
     github = models.URLField(
         verbose_name=_("GitHub Profile"),
         blank=True,
         null=True,
-        validators=[URLValidator()],
         help_text=_("Enter a valid URL for the GitHub profile.")
     )
     youtube = models.URLField(
         verbose_name=_("YouTube Channel"),
         blank=True,
         null=True,
-        validators=[URLValidator()],
         help_text=_("Enter a valid URL for the YouTube channel.")
     )
     linkedin = models.URLField(
         verbose_name=_("LinkedIn Profile"),
         blank=True,
         null=True,
-        validators=[URLValidator()],
         help_text=_("Enter a valid URL for the LinkedIn profile.")
     )
     address = models.CharField(

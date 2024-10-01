@@ -85,24 +85,24 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
             'user_type': {'required': True},
             'gender': {'required': True},
             'first_time_login': {'default': True, 'read_only': True},
-            # Roles will be optional during creation
-            'roles': {'required': False}
+            'roles': {'required': False},
+            'instagram': {'allow_blank': True, 'required': False},
+            'facebook': {'allow_blank': True, 'required': False},
+            'twitter': {'allow_blank': True, 'required': False},
+            'github': {'allow_blank': True, 'required': False},
+            'youtube': {'allow_blank': True, 'required': False},
+            'linkedin': {'allow_blank': True, 'required': False},
+            'address': {'allow_blank': True, 'required': False},
         }
 
     def create(self, validated_data):
         roles_data = validated_data.pop('roles', [])
-
-        # Set password as passport_id
         password = validated_data.get('passport_id')
-
-        # Create the user object
         user = User(**validated_data)
-        # Automatically set password to passport_id
         user.set_password(password)
         user.first_time_login = True  # Set first_time_login to True on registration
         user.save()
 
-        # Assign roles using set()
         if roles_data:
             user.roles.set(roles_data)  # Assign roles using set
 
@@ -116,11 +116,14 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
 
         instance.save()
 
-        # Update roles if provided
         if roles_data is not None:
             instance.roles.set(roles_data)
 
         return instance
+
+
+class UserBulkUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
 
 
 class UserJwtSerializer(serializers.ModelSerializer):
