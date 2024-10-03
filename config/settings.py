@@ -75,7 +75,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ["templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -192,3 +192,13 @@ AUTHENTICATION_BACKENDS = [
 LOGIN_URL = "identity:token_obtain_pair"
 LOGOUT_URL = "identity:logout"
 LOGIN_REDIRECT_URL = "schema-swagger-ui"
+
+EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'rmusayevr19@gmail.com'
+EMAIL_HOST_PASSWORD = 'rcysyyqtiizakzep'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+FRONTEND_URL = 'localhost:3000'

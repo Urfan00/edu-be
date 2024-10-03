@@ -265,10 +265,21 @@ class ChangePasswordSerializer(serializers.Serializer):
         return value
 
     def validate_new_password(self, value):
-        # You can add your own password validation logic here
         if len(value) < 8:
             raise ValidationError(
                 _("New password must be at least 8 characters long."))
+        if not any(_.isdigit() for _ in value['new_password']):
+            raise serializers.ValidationError(
+                {"error": "The password must contain at least 1 number."})
+        if not any(_.isupper() for _ in value['new_password']):
+            raise serializers.ValidationError(
+                {"error": "There must be at least 1 uppercase letter in the password."})
+        
+        user = self.context['request'].user
+
+        if not user.check_password(value['old_password']):
+            raise serializers.ValidationError(
+                {"old_password": "Wrong password."})
         return value
 
     def save(self):
@@ -278,12 +289,31 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class SetNewPasswordSerializer(serializers.Serializer):
-    new_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(min_length=8, write_only=True, required=True)
     email = serializers.EmailField(required=True)
 
     def validate_new_password(self, value):
-        # You can add your own password validation logic here
-        if len(value) < 8:
-            raise ValidationError(
-                _("New password must be at least 8 characters long."))
+        if not any(_.isdigit() for _ in value['new_password']):
+            raise serializers.ValidationError(
+                {"error": "The password must contain at least 1 number."})
+        if not any(_.isupper() for _ in value['new_password']):
+            raise serializers.ValidationError(
+                {"error": "There must be at least 1 uppercase letter in the password."})
+        if value["email"]:
+            user = User.objects.get(email=value["email"])
+            if not user:
+                raise serializers.ValidationError("User not found!")
+            if not user.is_active:
+                raise serializers.ValidationError("Email not activated!")
+        return value
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        try:
+            user = User.objects.get(email=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("There is no user registered with this email address.")
         return value

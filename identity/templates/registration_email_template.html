@@ -1,0 +1,17 @@
+<html>
+
+<body>
+    <p>Dear {{ user.get_full_name }},</p>
+    <p>You have been successfully registered on our platform.</p>
+    <p>Here are your login credentials:</p>
+    <ul>
+        <li>Email: {{ email }}</li>
+        <li>Temporary Password: {{ password }}</li>
+    </ul>
+    <p>Please log in using these credentials and change your password to complete your registration.</p>
+    <br>
+    <p>Best regards,</p>
+    <p>Your Company</p>
+</body>
+
+</html>

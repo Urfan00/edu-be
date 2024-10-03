@@ -28,7 +28,7 @@ class RoleAdmin(admin.ModelAdmin):
 class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('id', 'email', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'father_name', 'gender')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'father_name', 'passport_id', 'gender', 'user_type')}),
         (_('Contact info'), {'fields': ('phone_number', 'address')}),
         (_('Social media'), {
             'fields': ('instagram', 'facebook', 'twitter', 'github', 'youtube', 'linkedin'),
@@ -41,7 +41,7 @@ class UserAdmin(BaseUserAdmin):
 
     add_fieldsets = (
         (None, {
-            'fields': ('email', 'password', 'first_name', 'last_name', 'father_name', 'gender', 'phone_number', 'passport_id'),
+            'fields': ('email', 'password', 'first_name', 'last_name', 'father_name', 'gender', 'phone_number', 'passport_id', 'user_type'),
         }),
         (_('Optional info'), {
             'fields': ('profile_image', 'bio', 'instagram', 'facebook', 'twitter', 'github', 'youtube', 'linkedin', 'address', 'roles'),
@@ -52,7 +52,7 @@ class UserAdmin(BaseUserAdmin):
     )
 
     # Fields to be displayed in the list view
-    list_display = ['id', 'email', 'first_name', 'last_name', 'user_type']
+    list_display = ['id', 'email', 'first_name', 'last_name', 'passport_id', 'user_type']
     
     # Fields to filter by in the list view
     list_filter = ['is_superuser', 'is_staff', 'is_active', 'user_type', 'first_time_login']
