@@ -255,8 +255,8 @@ class TokenRefreshResponseSerializer(serializers.Serializer):
 
 
 class ChangePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(required=True, write_only=True)
-    new_password = serializers.CharField(required=True, write_only=True)
+    old_password = serializers.CharField(required=True, write_only=True, style={"input_type": "password"})
+    new_password = serializers.CharField(required=True, write_only=True, style={"input_type": "password"})
 
     def validate_old_password(self, value):
         user = self.context['request'].user
@@ -289,7 +289,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class SetNewPasswordSerializer(serializers.Serializer):
-    new_password = serializers.CharField(min_length=8, write_only=True, required=True)
+    new_password = serializers.CharField(min_length=8, write_only=True, required=True, style={"input_type": "password"})
     email = serializers.EmailField(required=True)
 
     def validate_new_password(self, value):
