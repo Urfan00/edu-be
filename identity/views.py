@@ -2,7 +2,6 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.models import Permission
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
@@ -30,16 +29,9 @@ from identity.serializers import (
     UserSerializer,
     UserCreateUpdateSerializer,
     RoleSerializer,
-    PermissionSerializer,
     TokenObtainPairResponseSerializer,
 )
 from identity.utils import send_registration_email
-
-
-# Permission ViewSet
-class PermissionViewSet(viewsets.ModelViewSet):
-    queryset = Permission.objects.all()
-    serializer_class = PermissionSerializer
 
 
 # Role ViewSet
