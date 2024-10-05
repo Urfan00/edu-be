@@ -1,11 +1,10 @@
 import uuid
 from django.contrib.auth import get_backends
 from django.contrib.auth.models import AbstractBaseUser, Permission
-from django.core.validators import RegexValidator, URLValidator
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
 
 
 from identity.managers import CustomUserManager

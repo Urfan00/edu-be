@@ -1,5 +1,6 @@
+from urllib.parse import urlparse
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 from django.db import transaction
@@ -17,6 +18,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from group.models import Group
 from identity.models import User, Role
 from identity.serializers import (
     ChangePasswordSerializer,
@@ -103,37 +105,52 @@ class UserBulkUploadView(generics.CreateAPIView):
                 'passport_id': row['passport_id'],
                 'user_type': row['user_type'],
                 'bio': row.get('bio', None),
-                'instagram': row.get('instagram', None),
-                'facebook': row.get('facebook', None),
-                'twitter': row.get('twitter', None),
-                'github': row.get('github', None),
-                'youtube': row.get('youtube', None),
-                'linkedin': row.get('linkedin', None),
-                'address': row.get('address', None)
+                'instagram': self.validate_url(row.get('instagram')),
+                'facebook': self.validate_url(row.get('facebook')),
+                'twitter': self.validate_url(row.get('twitter')),
+                'github': self.validate_url(row.get('github')),
+                'youtube': self.validate_url(row.get('youtube')),
+                'linkedin': self.validate_url(row.get('linkedin')),
+                'address': row.get('address', None),
+                'group': row.get('group', None)
             }
 
-            # Handle roles if present
             roles = row.get('roles', '')
             if roles:
                 role_names = [role.strip() for role in roles.split(',')]
+                # Fetch roles based on name and convert to IDs
                 role_objects = Role.objects.filter(name__in=role_names)
-                user_data['roles'] = role_objects
+                user_data['roles'] = [role.id for role in role_objects]
 
-            # Try to create the user
-            serializer = UserCreateUpdateSerializer(data=user_data)
-            try:
-                serializer.is_valid(raise_exception=True)
-                users_to_create.append(user_data)
-            except ValidationError as ve:
-                errors.append(f"Row {index + 1}: {str(ve)}")
-            except Exception as e:
-                errors.append(f"Row {index + 1}: {str(e)}")
+            if user_data['user_type'] == 'student':
+                group_name = user_data['group']
+                if not group_name:
+                    errors.append(f"Row {index + 1}: Group is required for students.")
+                    continue
+
+                try:
+                    group = Group.objects.get(group_name=group_name)
+                    user_data['group'] = group.id
+
+                    serializer = UserCreateUpdateSerializer(data=user_data)
+                    try:
+                        serializer.is_valid(raise_exception=True)
+                        users_to_create.append(user_data)
+                    except ValidationError as ve:
+                        errors.append(f"Row {index + 1}: {str(ve)}")
+                    except Exception as e:
+                        errors.append(f"Row {index + 1}: {str(e)}")
+
+                except ObjectDoesNotExist:
+                    errors.append(f"Row {index + 1}: Group '{group_name}' does not exist.")
+                    continue
+            else:
+                user_data['group'] = None
 
         # Return the response with errors (if any) and the list of created users
         if errors:
             return Response({"errors": errors}, status=status.HTTP_400_BAD_REQUEST)
 
-        
         with transaction.atomic():  # Start a new transaction
             created_users = []
             for user_data in users_to_create:
@@ -145,6 +162,17 @@ class UserBulkUploadView(generics.CreateAPIView):
 
         return Response({"message": "Users created successfully", "created_users": created_users}, status=status.HTTP_201_CREATED)
 
+    def validate_url(self, url):
+        """
+        Validates that the provided URL is either None or a valid URL.
+        If the URL is invalid, returns None.
+        """
+        if not url:
+            return None
+        parsed = urlparse(url)
+        if all([parsed.scheme, parsed.netloc]):  # Valid URL has both scheme and netloc
+            return url
+        return None
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer

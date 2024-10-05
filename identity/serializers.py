@@ -3,13 +3,13 @@ from django.contrib.auth.models import Permission
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext_lazy as _
+from group.models import Group, UserGroup
 from identity.models import (
     User,
     Role,
     AccessToken as AccessTokenModel
 )
 
-from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
@@ -80,6 +80,9 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
     roles = serializers.PrimaryKeyRelatedField(
         queryset=Role.objects.all(), many=True, required=False
     )
+    group = serializers.PrimaryKeyRelatedField(
+        queryset=Group.objects.all(), required=False
+    )
 
     class Meta:
         model = User
@@ -87,7 +90,7 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
             'email', 'first_name', 'last_name', 'father_name', 'gender',
             'profile_image', 'bio', 'phone_number', 'passport_id', 'instagram',
             'facebook', 'twitter', 'github', 'youtube', 'linkedin', 'address',
-            'roles', 'first_time_login', 'user_type'
+            'roles', 'first_time_login', 'user_type', 'group',
         ]
         extra_kwargs = {
             'first_name': {'required': True},
@@ -99,7 +102,6 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
             'user_type': {'required': True},
             'gender': {'required': True},
             'first_time_login': {'default': True, 'read_only': True},
-            'roles': {'required': False},
             'instagram': {'allow_blank': True, 'required': False},
             'facebook': {'allow_blank': True, 'required': False},
             'twitter': {'allow_blank': True, 'required': False},
@@ -107,23 +109,48 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
             'youtube': {'allow_blank': True, 'required': False},
             'linkedin': {'allow_blank': True, 'required': False},
             'address': {'allow_blank': True, 'required': False},
+            'roles': {'required': False},
+            'group': {'required': False},
         }
+
+    def validate(self, data):
+        # Additional validation for student-specific logic
+        user_type = data.get('user_type')
+
+        if user_type == 'student':
+            # Check that group is provided for student
+            if not data.get('group'):
+                raise serializers.ValidationError("Group is required for students.")
+            
+            # Make some fields required only for students
+            required_fields_for_students = ['first_name', 'last_name', 'father_name', 'passport_id', 'phone_number', 'email', 'gender']
+            for field in required_fields_for_students:
+                if not data.get(field):
+                    raise serializers.ValidationError(f"{field.replace('_', ' ').capitalize()} is required for students.")
+            
+        return data
 
     def create(self, validated_data):
         roles_data = validated_data.pop('roles', [])
+        group = validated_data.pop('group', None)
         password = validated_data.get('passport_id')
+
         user = User(**validated_data)
         user.set_password(password)
-        user.first_time_login = True  # Set first_time_login to True on registration
+        user.first_time_login = True
         user.save()
 
         if roles_data:
-            user.roles.set(roles_data)  # Assign roles using set
+            user.roles.set(roles_data)
+
+        if validated_data.get('user_type') == 'student' and group:
+            UserGroup.objects.create(student=user, group=group, average=0.0)
 
         return user
 
     def update(self, instance, validated_data):
         roles_data = validated_data.pop('roles', None)
+        group = validated_data.pop('group', None)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -132,6 +159,11 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
 
         if roles_data is not None:
             instance.roles.set(roles_data)
+
+        # Handle group assignment if user is a student
+        if validated_data.get('user_type') == 'student' and group:
+            # Check if student is already in a group, update it
+            UserGroup.objects.update_or_create(student=instance, defaults={'group': group})
 
         return instance
 

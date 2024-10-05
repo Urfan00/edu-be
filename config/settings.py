@@ -55,6 +55,7 @@ THIRD_PARTY_APPS = [
 
 MY_APPS = [
     "identity.apps.IdentityConfig",
+    "group.apps.GroupConfig",
 ]
 
 INSTALLED_APPS = INITIAL_APPS + BASE_APPS + THIRD_PARTY_APPS + MY_APPS
@@ -193,7 +194,7 @@ LOGIN_URL = "identity:token_obtain_pair"
 LOGOUT_URL = "identity:logout"
 LOGIN_REDIRECT_URL = "schema-swagger-ui"
 
-EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
