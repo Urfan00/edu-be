@@ -20,7 +20,7 @@ from rest_framework_simplejwt.utils import datetime_from_epoch
 class PermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Permission
-        fields = ['id', 'name', 'codename', 'content_type']
+        fields = ['id', 'name']
         read_only_fields = ['id']
 
 
@@ -42,10 +42,22 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'status',
                   'permissions', 'permissions_detail']
 
+    def validate_permissions(self, value):
+        if not value or len(value) == 0:
+            raise serializers.ValidationError("Permissions are required.")
+        return value
+
+
+class UserRoleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Role
+        fields = ['id', 'name', 'description', 'status']
+
 
 # Serializer for User Model
 class UserSerializer(serializers.ModelSerializer):
-    roles = RoleSerializer(many=True, read_only=True)
+    roles = UserRoleSerializer(many=True, read_only=True)
     profile_image = serializers.SerializerMethodField()
 
     class Meta:
@@ -257,8 +269,10 @@ class TokenRefreshResponseSerializer(serializers.Serializer):
 
 
 class ChangePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(required=True, write_only=True, style={"input_type": "password"})
-    new_password = serializers.CharField(required=True, write_only=True, style={"input_type": "password"})
+    old_password = serializers.CharField(
+        required=True, write_only=True, style={"input_type": "password"})
+    new_password = serializers.CharField(
+        required=True, write_only=True, style={"input_type": "password"})
 
     def validate_old_password(self, value):
         if self.instance and not self.instance.check_password(value):
@@ -275,7 +289,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     def save(self):
         user = self.context['request'].user
         user.set_password(self.validated_data['new_password'])
-        
+
         if user.first_time_login:
             user.first_time_login = False
 
@@ -283,7 +297,8 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class SetNewPasswordSerializer(serializers.Serializer):
-    new_password = serializers.CharField(min_length=8, write_only=True, required=True, style={"input_type": "password"})
+    new_password = serializers.CharField(
+        min_length=8, write_only=True, required=True, style={"input_type": "password"})
     email = serializers.EmailField(required=True)
 
     def validate_new_password(self, value):
@@ -301,5 +316,6 @@ class PasswordResetRequestSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=value)
         except User.DoesNotExist:
-            raise serializers.ValidationError("There is no user registered with this email address.")
+            raise serializers.ValidationError(
+                "There is no user registered with this email address.")
         return value
