@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import Permission
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext_lazy as _
 from identity.models import (
     User,
@@ -259,27 +261,15 @@ class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True, write_only=True, style={"input_type": "password"})
 
     def validate_old_password(self, value):
-        user = self.context['request'].user
-        if not user.check_password(value):
-            raise ValidationError(_("Old password is not correct"))
+        if self.instance and not self.instance.check_password(value):
+            raise serializers.ValidationError(_("Old password is incorrect."))
         return value
 
     def validate_new_password(self, value):
-        if len(value) < 8:
-            raise ValidationError(
-                _("New password must be at least 8 characters long."))
-        if not any(_.isdigit() for _ in value['new_password']):
-            raise serializers.ValidationError(
-                {"error": "The password must contain at least 1 number."})
-        if not any(_.isupper() for _ in value['new_password']):
-            raise serializers.ValidationError(
-                {"error": "There must be at least 1 uppercase letter in the password."})
-        
-        user = self.context['request'].user
-
-        if not user.check_password(value['old_password']):
-            raise serializers.ValidationError(
-                {"old_password": "Wrong password."})
+        try:
+            validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
         return value
 
     def save(self):
@@ -293,18 +283,10 @@ class SetNewPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
     def validate_new_password(self, value):
-        if not any(_.isdigit() for _ in value['new_password']):
-            raise serializers.ValidationError(
-                {"error": "The password must contain at least 1 number."})
-        if not any(_.isupper() for _ in value['new_password']):
-            raise serializers.ValidationError(
-                {"error": "There must be at least 1 uppercase letter in the password."})
-        if value["email"]:
-            user = User.objects.get(email=value["email"])
-            if not user:
-                raise serializers.ValidationError("User not found!")
-            if not user.is_active:
-                raise serializers.ValidationError("Email not activated!")
+        try:
+            validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
         return value
 
 
