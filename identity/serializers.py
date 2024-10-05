@@ -275,6 +275,10 @@ class ChangePasswordSerializer(serializers.Serializer):
     def save(self):
         user = self.context['request'].user
         user.set_password(self.validated_data['new_password'])
+        
+        if user.first_time_login:
+            user.first_time_login = False
+
         user.save()
 
 
