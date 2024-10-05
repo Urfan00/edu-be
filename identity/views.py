@@ -192,10 +192,11 @@ class ChangePasswordView(generics.UpdateAPIView):
         return self.request.user
 
     def put(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"detail": _("Password changed successfully.")})
+        serializer = self.get_serializer(instance=request.user, data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "Password changed successfully."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PasswordResetRequestView(generics.GenericAPIView):
