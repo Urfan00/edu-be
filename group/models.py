@@ -73,3 +73,4 @@ class UserGroup(TimeStampedModel):
     class Meta:
         verbose_name = _("User Group")
         verbose_name_plural = _("User Groups")
+        unique_together = ('student', 'group')

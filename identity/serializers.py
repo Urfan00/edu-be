@@ -143,8 +143,8 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         if roles_data:
             user.roles.set(roles_data)
 
-        if validated_data.get('user_type') == 'student' and group:
-            UserGroup.objects.create(student=user, group=group, average=0.0)
+        if UserGroup.objects.filter(student=user, group=group).exists():
+            raise serializers.ValidationError("User is already assigned to this group.")
 
         return user
 
@@ -328,17 +328,33 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.save()
 
 
-class SetNewPasswordSerializer(serializers.Serializer):
-    new_password = serializers.CharField(
-        min_length=8, write_only=True, required=True, style={"input_type": "password"})
-    email = serializers.EmailField(required=True)
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8,
+        required=True,
+        style={"input_type": "password"}
+    )
+    password_confirmation = serializers.CharField(
+        write_only=True,
+        max_length=128,
+        required=True,
+        style={"input_type": "password"}
+    )
 
-    def validate_new_password(self, value):
+    def validate_password(self, value):
         try:
             validate_password(value)
         except DjangoValidationError as e:
             raise serializers.ValidationError(list(e.messages))
         return value
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["password_confirmation"]:
+            raise serializers.ValidationError(
+                {"password_confirmation": _("Passwords do not match.")}
+            )
+        return attrs
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):

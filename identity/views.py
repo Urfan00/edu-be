@@ -9,6 +9,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
 
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
 import pandas as pd
@@ -25,7 +26,7 @@ from identity.serializers import (
     CustomTokenObtainPairSerializer,
     CustomTokenRefreshSerializer,
     PasswordResetRequestSerializer,
-    SetNewPasswordSerializer,
+    PasswordResetConfirmSerializer,
     TokenRefreshResponseSerializer,
     UserBulkUploadSerializer,
     UserSerializer,
@@ -174,6 +175,7 @@ class UserBulkUploadView(generics.CreateAPIView):
             return url
         return None
 
+
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
@@ -252,23 +254,48 @@ class PasswordResetRequestView(generics.GenericAPIView):
 
 
 class ResetPasswordView(generics.GenericAPIView):
-    serializer_class = SetNewPasswordSerializer
+    serializer_class = PasswordResetConfirmSerializer
 
+    @swagger_auto_schema(
+        operation_description="Confirm the password reset by providing the new password, token, and UID. "
+        "Resets the user's password if the token is valid.",
+        tags=["Password Reset"],
+        manual_parameters=[
+            openapi.Parameter('uidb64', openapi.IN_PATH,
+                              description="Base64 encoded user ID", type=openapi.TYPE_STRING),
+            openapi.Parameter('token', openapi.IN_PATH,
+                              description="Password reset token", type=openapi.TYPE_STRING)
+        ],
+        responses={
+            status.HTTP_200_OK: "Password reset successfully.",
+            status.HTTP_400_BAD_REQUEST: "Invalid token or user does not exist."
+        }
+    )
     def post(self, request, uidb64, token):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        password = serializer.validated_data["password"]
+
+        user = self.get_user(uidb64)
+        if user is None:
+            return Response({"detail": _("Invalid token or user does not exist.")}, status=status.HTTP_400_BAD_REQUEST)
+
+        if self.verify_token(user, token):
+            user.set_password(password)
+            user.save()
+
+            return Response({"detail": _("Password reset successfully.")}, status=status.HTTP_200_OK)
+        else:
+            return Response({"detail": _("Invalid or expired token.")}, status=status.HTTP_400_BAD_REQUEST)
+        
+    def get_user(self, uidb64):
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            return Response({'message': 'Invalid reset link.'}, status=status.HTTP_400_BAD_REQUEST)
+            user = None
+        return user
 
-        if not default_token_generator.check_token(user, token):
-            return Response({'message': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Reset password
-        user.set_password(serializer.validated_data['new_password'])
-        user.save()
-
-        return Response({"detail": _("Password has been reset successfully.")})
+    def verify_token(self, user, token):
+        return default_token_generator.check_token(user, token)
