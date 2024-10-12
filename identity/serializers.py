@@ -146,6 +146,9 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         if UserGroup.objects.filter(student=user, group=group).exists():
             raise serializers.ValidationError("User is already assigned to this group.")
 
+        if validated_data.get('user_type') == 'student' and group:
+            UserGroup.objects.create(student=user, group=group, average=0.0)
+
         return user
 
     def update(self, instance, validated_data):
@@ -161,9 +164,11 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
             instance.roles.set(roles_data)
 
         # Handle group assignment if user is a student
+        if UserGroup.objects.filter(student=instance, group=group).exists():
+            raise serializers.ValidationError("User is already assigned to this group.")
+
         if validated_data.get('user_type') == 'student' and group:
-            # Check if student is already in a group, update it
-            UserGroup.objects.update_or_create(student=instance, defaults={'group': group})
+            UserGroup.objects.create(student=instance, group=group, average=0.0)
 
         return instance
 
