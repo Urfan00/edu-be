@@ -43,6 +43,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("identity.urls", namespace="identity")),
     path("api/", include("group.urls", namespace="group")),
+    path("api/", include("payment.urls", namespace="payment")),
     path("api-auth/", include("rest_framework.urls")),
     path("api-docs/", schema_view.with_ui("swagger",
          cache_timeout=0), name="schema-swagger-ui"),
