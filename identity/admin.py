@@ -4,11 +4,12 @@ from django.contrib.auth.models import Permission
 from identity.models import AccessToken, User, Role
 from django.utils import timezone
 from django.utils.translation import ngettext_lazy, gettext_lazy as _
+from import_export.admin import ImportExportModelAdmin
 
 
 # Register Permission model to admin
 @admin.register(Permission)
-class PermissionAdmin(admin.ModelAdmin):
+class PermissionAdmin(ImportExportModelAdmin):
     list_display = ['id', 'name', 'codename', 'content_type']
     search_fields = ['name', 'codename']
     list_filter = ['content_type']
@@ -17,7 +18,7 @@ class PermissionAdmin(admin.ModelAdmin):
 
 # Customizing the RoleAdmin to manage permissions within roles
 @admin.register(Role)
-class RoleAdmin(admin.ModelAdmin):
+class RoleAdmin(ImportExportModelAdmin):
     list_display = ['id', 'name', 'status', 'created_at', 'updated_at']
     search_fields = ['name', 'description']
     filter_horizontal = ['permissions']  # Allow multi-select for permissions
@@ -25,7 +26,7 @@ class RoleAdmin(admin.ModelAdmin):
 
 # Customizing UserAdmin to display additional fields
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(BaseUserAdmin, ImportExportModelAdmin):
     fieldsets = (
         (None, {'fields': ('id', 'email', 'password')}),
         (_('Personal info'), {'fields': ('first_name', 'last_name', 'father_name', 'passport_id', 'gender', 'user_type')}),
@@ -72,7 +73,7 @@ class UserAdmin(BaseUserAdmin):
 
 
 @admin.register(AccessToken)
-class AccessTokenAdmin(admin.ModelAdmin):
+class AccessTokenAdmin(ImportExportModelAdmin):
     actions = ("action_delete_expired_tokens",)
     list_display = (
         "jti",

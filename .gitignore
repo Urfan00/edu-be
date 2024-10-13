@@ -376,4 +376,4 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,windows,macos,linux,venv,python,django
-/**/**/migrations
+# /**/**/migrations
