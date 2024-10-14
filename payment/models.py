@@ -15,6 +15,16 @@ class Payment(TimeStampedModel):
         verbose_name=_("Hours"),
         help_text=_("The number of hours worked.")
     )
+    start_date = models.DateTimeField(
+        verbose_name=_("Start Date and Time"),
+        help_text=_("The start date and time of the period for this payment history.")
+    )
+    end_date = models.DateTimeField(
+        verbose_name=_("End Date and Time"),
+        help_text=_("The end date and time of the period for this payment history."),
+        null=True,
+        blank=True
+    )
     price_per_hour = models.DecimalField(
         verbose_name=_("Price Per Hour (AZN)"),
         max_digits=10,  # Example: 9999999.999₼
