@@ -7,6 +7,23 @@ from services.abstract_models import TimeStampedModel
 
 
 class Group(TimeStampedModel):
+
+    class Status(models.TextChoices):
+        ACTIVE = 'active', _("Active")          # Aktiv: Qrup hazırda aktivdir və davam edir. Bu, aktiv qrup üçün standart vəziyyətdir.
+        PENDING = 'pending', _("Pending")       # Gözlənir: Qrup yaradılıb, lakin hələ başlamamışdır. Bu, müəyyən bir tarixdə başlaması planlaşdırılan gələcək qruplar üçün faydalı ola bilər.
+        PAUSED = 'paused', _("Paused")          # Pauza: Qrup müvəqqəti olaraq dayandırılıb (məsələn, tətil və ya fasilələr zamanı), lakin sonradan davam etdirilə bilər. Bu status qrupu tam ləğv etmədən çevikliyə imkan verir.
+        COMPLETED = 'completed', _("Completed") # Tamamlandı: Qrup nəzərdə tutulan sonuna çatdı (məsələn, kursun və ya proqramın sonuna), lakin ləğv edilmək və ya müddəti bitmək əvəzinə uğurla tamamlandı.
+        CANCELED = 'canceled', _("Canceled")    # Ləğv edildi: Qrup, ola bilsin, az iştirak və ya digər səbəblərə görə vaxtından əvvəl ləğv edildi.
+        EXPIRED = 'expired', _("Expired")       # Müddəti bitdi: Qrup rəsmi şəkildə tamamlanmadan planlaşdırılan bitmə tarixini keçdi.
+        ARCHIVED = 'archived', _("Archived")    # Arxivləşdirilmiş: Qrup artıq aktiv deyil və ya göstərilmir, lakin tarix və ya qeydlərin aparılması məqsədləri üçün sistemdə qalır.
+
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.ACTIVE,
+        verbose_name=_("Status"),
+        help_text=_("Current status of the group. It can be Active, Pending, Paused, Completed, Canceled, Expired, or Archived.")
+    )
     group_name = models.CharField(
         verbose_name=_("Group Name"),
         max_length=150,
@@ -26,10 +43,6 @@ class Group(TimeStampedModel):
         limit_choices_to={"user_type": "operator"},
         verbose_name=_("Operator")
     )
-    is_active = models.BooleanField(
-        verbose_name=_("Is Active"),
-        default=True,
-    )
     start_date = models.DateField(
         verbose_name=_("Start Date"),
     )
@@ -48,6 +61,20 @@ class Group(TimeStampedModel):
 
 
 class UserGroup(TimeStampedModel):
+
+    class Status(models.TextChoices):
+        ACTIVE = 'active', _("Active")                  # Aktiv: Tələbə qrupda hazırda aktivdir və davam edir.
+        GRADUATED = 'graduated', _("Graduated")         # Məzun olub: Tələbə proqramı və ya kursu uğurla başa vurub.
+        TRANSFERRED = 'transferred', _("Transferred")   # Köçürüldü: Tələbə başqa qrupa köçürüldü.
+        DROPPED_OUT = 'dropped_out', _("Dropped Out")   # Tərkib: Tələbə kursu bitirməmiş qrupdan ayrıldı.
+
+    status = models.CharField(
+        max_length=15,
+        choices=Status.choices,
+        default=Status.ACTIVE,
+        verbose_name=_("Status"),
+        help_text=_("Current status of the student's participation. It can be Graduated, Dropped Out, Transferred or Active.")
+    )
     student = models.ForeignKey(
         to=User,
         on_delete=models.CASCADE,

@@ -5,8 +5,8 @@ from import_export.admin import ImportExportModelAdmin
 
 @admin.register(Group)
 class GroupAdmin(ImportExportModelAdmin):
-    list_display = ['id', 'group_name', 'teacher', 'operator', 'is_active', 'start_date', 'end_date']
-    list_filter = ['is_active', 'start_date', 'end_date']
+    list_display = ['id', 'group_name', 'teacher', 'operator', 'status', 'start_date', 'end_date']
+    list_filter = ['status', 'start_date', 'end_date']
     search_fields = ['group_name', 'teacher__email', 'operator__email']
     ordering = ['group_name']
     readonly_fields = ['id']
@@ -14,8 +14,8 @@ class GroupAdmin(ImportExportModelAdmin):
 
 @admin.register(UserGroup)
 class UserGroupAdmin(ImportExportModelAdmin):
-    list_display = ['id', 'student', 'group', 'average']
-    list_filter = ['group', 'student']
+    list_display = ['id', 'student', 'group', 'average', 'status']
+    list_filter = ['group', 'student', 'status']
     search_fields = ['student__email', 'group__group_name']
     ordering = ['group', 'student']
     readonly_fields = ['id']

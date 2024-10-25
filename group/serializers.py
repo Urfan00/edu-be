@@ -16,7 +16,7 @@ class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ['id', 'group_name', 'teacher', 'operator',
-                  'is_active', 'start_date', 'end_date']
+                  'status', 'start_date', 'end_date']
 
     def validate(self, data):
         start_date = data.get('start_date')
