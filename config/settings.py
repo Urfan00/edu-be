@@ -59,6 +59,7 @@ MY_APPS = [
     "identity.apps.IdentityConfig",
     "group.apps.GroupConfig",
     "payment.apps.PaymentConfig",
+    "register.apps.RegisterConfig",
 ]
 
 INSTALLED_APPS = INITIAL_APPS + BASE_APPS + THIRD_PARTY_APPS + MY_APPS
