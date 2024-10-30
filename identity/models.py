@@ -59,7 +59,7 @@ class User(AbstractBaseUser):
         STUDENT = "student", _("Student")
         PARENT = "parent", _("Parent")
         TEACHER = "teacher", _("Teacher")
-        OPERATOR = "operator", _("Operator")
+        STAFF = "staff", _("Staff")
         DIRECTOR = "director", _("Director")
 
     id = models.UUIDField(
@@ -98,11 +98,18 @@ class User(AbstractBaseUser):
         ],
         help_text=_("Enter a valid passport ID with letters and numbers.")
     )
-    phone_number = models.CharField(
+    phone_number_1 = models.CharField(
         verbose_name=_("Phone number"),
         max_length=50,
         help_text=_(
-            "Enter the phone number of the user. For example: +994123456789."
+            "Enter the phone number 1 of the user. For example: +994123456789."
+        )
+    )
+    phone_number_2 = models.CharField(
+        verbose_name=_("Phone number"),
+        max_length=50,
+        help_text=_(
+            "Enter the phone number 2 of the user. For example: +994123456789."
         )
     )
     user_type = models.CharField(

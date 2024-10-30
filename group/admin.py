@@ -5,9 +5,9 @@ from import_export.admin import ImportExportModelAdmin
 
 @admin.register(Group)
 class GroupAdmin(ImportExportModelAdmin):
-    list_display = ['id', 'group_name', 'teacher', 'operator', 'status', 'start_date', 'end_date']
+    list_display = ['id', 'group_name', 'teacher', 'mentor', 'status', 'start_date', 'end_date']
     list_filter = ['status', 'start_date', 'end_date']
-    search_fields = ['group_name', 'teacher__email', 'operator__email']
+    search_fields = ['group_name', 'teacher__email', 'mentor__email']
     ordering = ['group_name']
     readonly_fields = ['id']
 

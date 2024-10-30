@@ -9,7 +9,6 @@ from identity.models import (
     Role,
     AccessToken as AccessTokenModel
 )
-
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
@@ -57,40 +56,52 @@ class UserRoleSerializer(serializers.ModelSerializer):
 
 # Serializer for User Model
 class UserSerializer(serializers.ModelSerializer):
-    roles = UserRoleSerializer(many=True, read_only=True)
-    profile_image = serializers.SerializerMethodField()
+    # dinamik permissionlar olanda role elave edilmelidi
+    # roles = UserRoleSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
         fields = [
             'id', 'email', 'first_name', 'last_name', 'father_name', 'gender',
-            'profile_image', 'bio', 'phone_number', 'passport_id',
+            'profile_image', 'bio', 'phone_number_1', 'phone_number_2', 'passport_id',
             'instagram', 'facebook', 'twitter', 'github', 'youtube',
-            'linkedin', 'address', 'roles', 'first_time_login', 'user_type'
+            'linkedin', 'address', 'first_time_login', 'user_type'
         ]
 
-    def get_profile_image(self, obj):
-        if obj.profile_image:
-            return obj.profile_image.url  # Return the URL of the uploaded image
-        return None
+        # dinamik permissionlar olanda role elave edilmelidi
+        # fields = [
+        #     'id', 'email', 'first_name', 'last_name', 'father_name', 'gender',
+        #     'profile_image', 'bio', 'phone_number_1', 'phone_number_2', 'passport_id',
+        #     'instagram', 'facebook', 'twitter', 'github', 'youtube',
+        #     'linkedin', 'address', 'roles', 'first_time_login', 'user_type'
+        # ]
+
+
+class UserFilterSerializer(serializers.Serializer):
+    user_type = serializers.CharField(required=True)
+
+    def validate_user_type(self, value):
+        allowed_types = {'teacher', 'student', 'parent', 'staff', 'director'}
+        if value not in allowed_types:
+            raise serializers.ValidationError(
+                _("Invalid user_type. Allowed values are: teacher, student, parent, staff, director.")
+            )
+        return value
 
 
 # Serializer for User Creation/Update (with roles and permissions)
 class UserCreateUpdateSerializer(serializers.ModelSerializer):
-    roles = serializers.PrimaryKeyRelatedField(
-        queryset=Role.objects.all(), many=True, required=False
-    )
-    group = serializers.PrimaryKeyRelatedField(
-        queryset=Group.objects.all(), required=False
-    )
+    # roles = serializers.PrimaryKeyRelatedField(
+    #     queryset=Role.objects.all(), many=True, required=False
+    # )
 
     class Meta:
         model = User
         fields = [
             'email', 'first_name', 'last_name', 'father_name', 'gender',
-            'profile_image', 'bio', 'phone_number', 'passport_id', 'instagram',
-            'facebook', 'twitter', 'github', 'youtube', 'linkedin', 'address',
-            'roles', 'first_time_login', 'user_type', 'group',
+            'profile_image', 'bio', 'phone_number_1', 'phone_number_2',
+            'passport_id', 'instagram', 'facebook', 'twitter', 'github',
+            'youtube', 'linkedin', 'address', 'first_time_login', 'user_type'
         ]
         extra_kwargs = {
             'first_name': {'required': True},
@@ -98,7 +109,8 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
             'father_name': {'required': True},
             'email': {'required': True},
             'passport_id': {'required': True},
-            'phone_number': {'required': True},
+            'phone_number_1': {'required': True},
+            'phone_number_2': {'required': True},
             'user_type': {'required': True},
             'gender': {'required': True},
             'first_time_login': {'default': True, 'read_only': True},
@@ -109,30 +121,21 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
             'youtube': {'allow_blank': True, 'required': False},
             'linkedin': {'allow_blank': True, 'required': False},
             'address': {'allow_blank': True, 'required': False},
-            'roles': {'required': False},
-            'group': {'required': False},
+            # 'roles': {'required': False}
         }
 
     def validate(self, data):
-        # Additional validation for student-specific logic
         user_type = data.get('user_type')
 
-        if user_type == 'student':
-            # Check that group is provided for student
-            if not data.get('group'):
-                raise serializers.ValidationError("Group is required for students.")
-            
-            # Make some fields required only for students
-            required_fields_for_students = ['first_name', 'last_name', 'father_name', 'passport_id', 'phone_number', 'email', 'gender']
-            for field in required_fields_for_students:
-                if not data.get(field):
-                    raise serializers.ValidationError(f"{field.replace('_', ' ').capitalize()} is required for students.")
-            
+        if user_type not in ["teacher", "parent", "director", "staff"]:
+            raise serializers.ValidationError(
+                    {"user_type": _("Invalid user type. Must be 'teacher', 'parent', 'director', or 'staff'.")}
+                )
+
         return data
 
     def create(self, validated_data):
-        roles_data = validated_data.pop('roles', [])
-        group = validated_data.pop('group', None)
+        # roles_data = validated_data.pop('roles', [])
         password = validated_data.get('passport_id')
 
         user = User(**validated_data)
@@ -140,14 +143,8 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         user.first_time_login = True
         user.save()
 
-        if roles_data:
-            user.roles.set(roles_data)
-
-        if UserGroup.objects.filter(student=user, group=group).exists():
-            raise serializers.ValidationError("User is already assigned to this group.")
-
-        if validated_data.get('user_type') == 'student' and group:
-            UserGroup.objects.create(student=user, group=group, average=0.0)
+        # if roles_data:
+        #     user.roles.set(roles_data)
 
         return user
 

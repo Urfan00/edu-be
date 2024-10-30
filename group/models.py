@@ -1,7 +1,5 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
-
 from identity.models import User
 from services.abstract_models import TimeStampedModel
 
@@ -36,12 +34,14 @@ class Group(TimeStampedModel):
         limit_choices_to={"user_type": "teacher"},
         verbose_name=_("Teacher")
     )
-    operator = models.ForeignKey(
+    mentor = models.ForeignKey(
         to=User,
         on_delete=models.CASCADE,
-        related_name="group_operators",
-        limit_choices_to={"user_type": "operator"},
-        verbose_name=_("Operator")
+        related_name="group_mentors",
+        limit_choices_to={"user_type": "staff"},  # Mentor included in the Staff
+        verbose_name=_("Mentor"),
+        blank=True,
+        null=True
     )
     start_date = models.DateField(
         verbose_name=_("Start Date"),
@@ -66,7 +66,7 @@ class UserGroup(TimeStampedModel):
         ACTIVE = 'active', _("Active")                  # Aktiv: Tələbə qrupda hazırda aktivdir və davam edir.
         GRADUATED = 'graduated', _("Graduated")         # Məzun olub: Tələbə proqramı və ya kursu uğurla başa vurub.
         TRANSFERRED = 'transferred', _("Transferred")   # Köçürüldü: Tələbə başqa qrupa köçürüldü.
-        DROPPED_OUT = 'dropped_out', _("Dropped Out")   # Tərkib: Tələbə kursu bitirməmiş qrupdan ayrıldı.
+        DROPPED_OUT = 'dropped_out', _("Dropped Out")   # Kursdan ayrılıb: Tələbə kursu bitirməmiş qrupdan ayrıldı.
 
     status = models.CharField(
         max_length=15,

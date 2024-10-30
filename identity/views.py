@@ -29,6 +29,7 @@ from identity.serializers import (
     PasswordResetConfirmSerializer,
     TokenRefreshResponseSerializer,
     UserBulkUploadSerializer,
+    UserFilterSerializer,
     UserSerializer,
     UserCreateUpdateSerializer,
     RoleSerializer,
@@ -46,6 +47,18 @@ class RoleViewSet(viewsets.ModelViewSet):
 # User ViewSet
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
+
+    def get_queryset(self):
+        # Initialize and validate filter serializer
+        filter_serializer = UserFilterSerializer(data=self.request.query_params)
+        filter_serializer.is_valid(raise_exception=True)
+
+        user_type = filter_serializer.validated_data['user_type']
+
+        if user_type in ['staff', 'director']:
+            return super().get_queryset().filter(user_type__in=['staff', 'director'])
+
+        return super().get_queryset().filter(user_type=user_type)
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:

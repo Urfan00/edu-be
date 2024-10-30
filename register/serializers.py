@@ -107,7 +107,8 @@ class RegisterUpdateSerializer(serializers.ModelSerializer):
                 'father_name': instance.father_name,
                 'email': instance.email,
                 'passport_id': instance.passport_id,
-                'phone_number': instance.phone_number_1,  # Assuming phone_number_1 maps to User's phone_number
+                'phone_number_1': instance.phone_number_1,  # Assuming phone_number_1 maps to User's phone_number
+                'phone_number_2': instance.phone_number_2,  # Assuming phone_number_1 maps to User's phone_number
                 'gender': instance.gender,
                 'user_type': User.UserTypeChoices.STUDENT  # Default user_type as STUDENT
             }

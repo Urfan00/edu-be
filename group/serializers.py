@@ -1,4 +1,3 @@
-# serializers.py
 from rest_framework import serializers
 from .models import Group, UserGroup
 from identity.models import User
@@ -9,13 +8,13 @@ class GroupSerializer(serializers.ModelSerializer):
     teacher = serializers.SlugRelatedField(
         slug_field="email", queryset=User.objects.filter(user_type="teacher")
     )
-    operator = serializers.SlugRelatedField(
-        slug_field="email", queryset=User.objects.filter(user_type="operator")
+    mentor = serializers.SlugRelatedField(
+        slug_field="email", queryset=User.objects.filter(user_type="staff"), required=False
     )
 
     class Meta:
         model = Group
-        fields = ['id', 'group_name', 'teacher', 'operator',
+        fields = ['id', 'group_name', 'teacher', 'mentor',
                   'status', 'start_date', 'end_date']
 
     def validate(self, data):

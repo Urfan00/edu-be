@@ -29,8 +29,8 @@ class RoleAdmin(ImportExportModelAdmin):
 class UserAdmin(BaseUserAdmin, ImportExportModelAdmin):
     fieldsets = (
         (None, {'fields': ('id', 'email', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'father_name', 'passport_id', 'gender', 'user_type')}),
-        (_('Contact info'), {'fields': ('phone_number', 'address')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'father_name', 'passport_id', 'profile_image', 'gender', 'user_type')}),
+        (_('Contact info'), {'fields': ('phone_number_1', 'phone_number_2', 'address')}),
         (_('Social media'), {
             'fields': ('instagram', 'facebook', 'twitter', 'github', 'youtube', 'linkedin'),
             'classes': ['collapse']
@@ -42,7 +42,7 @@ class UserAdmin(BaseUserAdmin, ImportExportModelAdmin):
 
     add_fieldsets = (
         (None, {
-            'fields': ('email', 'password', 'first_name', 'last_name', 'father_name', 'gender', 'phone_number', 'passport_id', 'user_type'),
+            'fields': ('email', 'password', 'first_name', 'last_name', 'father_name', 'gender', 'phone_number_1', 'phone_number_2', 'passport_id', 'user_type'),
         }),
         (_('Optional info'), {
             'fields': ('profile_image', 'bio', 'instagram', 'facebook', 'twitter', 'github', 'youtube', 'linkedin', 'address', 'roles'),
@@ -59,7 +59,7 @@ class UserAdmin(BaseUserAdmin, ImportExportModelAdmin):
     list_filter = ['is_superuser', 'is_staff', 'is_active', 'user_type', 'first_time_login']
 
     # Add search functionality for these fields
-    search_fields = ['email', 'first_name', 'last_name', 'passport_id', 'phone_number']
+    search_fields = ['email', 'first_name', 'last_name', 'passport_id', 'phone_number_1', 'phone_number_2']
 
     # Specify which fields can use filter_horizontal (multi-select in the admin)
     filter_horizontal = ['roles']
