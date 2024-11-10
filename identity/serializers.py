@@ -152,6 +152,10 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         roles_data = validated_data.pop('roles', None)
         group = validated_data.pop('group', None)
 
+        # Remove passport_id if present to prevent it from being updated
+        # update yazilanda duzelis edilecek!
+        # validated_data.pop('passport_id', None)
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 

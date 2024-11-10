@@ -46,7 +46,7 @@ class ProgramSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Register
-        fields = ['id', 'first_name' , 'last_name' , 'father_name' , 'email' , 'passport_id' , 'phone_number_1' , 'phone_number_2' , 'gender' , 'lesson_type' , 'status' , 'purpose' , 'source_of_information' , 'university' , 'filial' , 'region' , 'program']
+        fields = ['id', 'first_name' , 'last_name' , 'father_name' , 'email' , 'passport_id' , 'phone_number_1' , 'phone_number_2' , 'gender' , 'lesson_type', 'purpose' , 'source_of_information' , 'university' , 'filial' , 'region' , 'program']
 
     def validate(self, attrs):
         # Dictionary to hold field names and corresponding model references
