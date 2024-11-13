@@ -27,19 +27,29 @@ class Group(TimeStampedModel):
         max_length=150,
         unique=True
     )
-    teacher = models.ForeignKey(
-        to=User,
-        on_delete=models.CASCADE,
-        related_name="group_teachers",
-        limit_choices_to={"user_type": "teacher"},
-        verbose_name=_("Teacher")
+    teacher_passport_id = models.CharField(
+        max_length=20,
+        verbose_name=_("Teacher Passport ID"),
+        help_text=_("The passport ID of the teacher.")
     )
-    mentor = models.ForeignKey(
-        to=User,
-        on_delete=models.CASCADE,
-        related_name="group_mentors",
-        limit_choices_to={"user_type": "staff"},  # Mentor included in the Staff
-        verbose_name=_("Mentor"),
+    teacher_full_name = models.CharField(
+        max_length=150,
+        verbose_name=_("Teacher Full Name"),
+        help_text=_("The full name of the teacher."),
+        blank=True,
+        null=True
+    )
+    mentor_passport_id = models.CharField(
+        max_length=20,
+        verbose_name=_("Mentor Passport ID"),
+        help_text=_("The passport ID of the mentor."),
+        blank=True,
+        null=True
+    )
+    mentor_full_name = models.CharField(
+        max_length=150,
+        verbose_name=_("Mentor Full Name"),
+        help_text=_("The full name of the mentor."),
         blank=True,
         null=True
     )
@@ -75,12 +85,17 @@ class UserGroup(TimeStampedModel):
         verbose_name=_("Status"),
         help_text=_("Current status of the student's participation. It can be Graduated, Dropped Out, Transferred or Active.")
     )
-    student = models.ForeignKey(
-        to=User,
-        on_delete=models.CASCADE,
-        related_name="group_students",
-        limit_choices_to={"user_type": "student"},
-        verbose_name=_("Student")
+    student_passport_id = models.CharField(
+        max_length=20,
+        verbose_name=_("Student Passport ID"),
+        help_text=_("The passport ID of the student.")
+    )
+    student_full_name = models.CharField(
+        max_length=150,
+        verbose_name=_("Student Full Name"),
+        help_text=_("The full name of the student."),
+        blank=True,
+        null=True
     )
     group = models.ForeignKey(
         to=Group,
@@ -92,12 +107,15 @@ class UserGroup(TimeStampedModel):
         verbose_name=_("Average"),
         max_digits=10,
         decimal_places=2,
+        default=0
     )
 
     def __str__(self):
-        return f"{self.student.get_full_name()}'s {self.group} group"
+        return f"{self.student_full_name}'s {self.group} group"
 
     class Meta:
         verbose_name = _("User Group")
         verbose_name_plural = _("User Groups")
-        unique_together = ('student', 'group')
+        constraints = [
+            models.UniqueConstraint(fields=['student_passport_id', 'group'], name='unique_student_passport_group')
+        ]

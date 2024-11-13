@@ -118,7 +118,19 @@ class RegisterUpdateSerializer(serializers.ModelSerializer):
 
             send_registration_email(user)
 
+            # Check if a UserGroup with the same student_passport_id and group already exists
+            if UserGroup.objects.filter(student_passport_id=user.passport_id, group=group).exists():
+                raise serializers.ValidationError({
+                    "user_group": "User is already registered in this group."
+                })
+
             # Create UserGroup if the status is active and group is provided
-            UserGroup.objects.create(student=user, group=group, status=UserGroup.Status.ACTIVE, average=0.0)
+            UserGroup.objects.create(
+                student_passport_id=user.passport_id,  # Use passport_id directly
+                student_full_name=user.get_full_name(),  # Use full name directly
+                group=group,
+                # status=UserGroup.Status.ACTIVE,
+                # average=0.0
+            )
 
         return instance

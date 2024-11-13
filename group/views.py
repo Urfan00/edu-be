@@ -3,6 +3,8 @@ from .models import Group, UserGroup
 from .serializers import GroupSerializer, UserGroupSerializer
 from rest_framework.permissions import IsAuthenticated
 
+
+
 class GroupViewSet(viewsets.ModelViewSet):
     """
     A viewset for viewing and editing group instances.
