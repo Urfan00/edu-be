@@ -46,6 +46,8 @@ urlpatterns = [
     path("api/", include("group.urls", namespace="group")),
     path("api/", include("payment.urls", namespace="payment")),
     path("api/", include("register.urls", namespace="register")),
+    path("api/", include("attendance.urls", namespace="attendance")),
+    path("api/", include("salary.urls", namespace="salary")),
 
     path("api-auth/", include("rest_framework.urls")),
     path("api-docs/", schema_view.with_ui("swagger",

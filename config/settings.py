@@ -60,6 +60,8 @@ MY_APPS = [
     "group.apps.GroupConfig",
     "payment.apps.PaymentConfig",
     "register.apps.RegisterConfig",
+    "attendance.apps.AttendanceConfig",
+    "salary.apps.SalaryConfig",
 ]
 
 INSTALLED_APPS = INITIAL_APPS + BASE_APPS + THIRD_PARTY_APPS + MY_APPS

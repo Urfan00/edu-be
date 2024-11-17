@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from identity.models import User
 from services.abstract_models import TimeStampedModel
+from django.core.exceptions import ValidationError
 
 
 class Group(TimeStampedModel):
@@ -61,6 +61,38 @@ class Group(TimeStampedModel):
         blank=True,
         null=True
     )
+    group_salary_for_teacher = models.DecimalField(
+        verbose_name=_("Group Salary for Teacher"),
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text=_("The total salary paid to the teacher for this group.")
+    )
+    per_student_salary_for_teacher = models.DecimalField(
+        verbose_name=_("Per Student Salary for Teacher"),
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text=_("The salary paid to the teacher per student for this group.")
+    )
+
+    def clean(self):
+        """
+        Custom validation to ensure at least one salary field is filled.
+        """
+        if not self.group_salary_for_teacher and not self.per_student_salary_for_teacher:
+            raise ValidationError(
+                _("At least one of 'Group Salary for Teacher' or 'Per Student Salary for Teacher' must be filled.")
+            )
+
+    def save(self, *args, **kwargs):
+        """
+        Override save to call the clean method for validation.
+        """
+        self.clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.group_name

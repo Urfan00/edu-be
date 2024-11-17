@@ -9,7 +9,8 @@ class GroupSerializer(serializers.ModelSerializer):
         model = Group
         fields = [
             'id', 'group_name', 'teacher_passport_id', 'teacher_full_name',
-            'mentor_passport_id', 'mentor_full_name', 'status', 'start_date', 'end_date'
+            'mentor_passport_id', 'mentor_full_name', 'status', 'start_date', 'end_date',
+            'group_salary_for_teacher', 'per_student_salary_for_teacher'
         ]
 
     def validate(self, data):
@@ -42,6 +43,14 @@ class GroupSerializer(serializers.ModelSerializer):
         if start_date and end_date and start_date > end_date:
             raise serializers.ValidationError({
                 "start_date": _("Start date cannot be later than end date.")
+            })
+
+        group_salary_for_teacher = data.get('group_salary_for_teacher')
+        per_student_salary_for_teacher = data.get('per_student_salary_for_teacher')
+
+        if not group_salary_for_teacher and not per_student_salary_for_teacher:
+            raise serializers.ValidationError({
+                "salary": _("At least one of 'Group Salary for Teacher' or 'Per Student Salary for Teacher' must be filled.")
             })
         return data
 

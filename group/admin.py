@@ -5,7 +5,7 @@ from import_export.admin import ImportExportModelAdmin
 
 @admin.register(Group)
 class GroupAdmin(ImportExportModelAdmin):
-    list_display = ['id', 'group_name', 'teacher_passport_id', 'teacher_full_name', 'mentor_passport_id', 'mentor_full_name', 'status', 'start_date', 'end_date', 'created_at', 'updated_at']
+    list_display = ['id', 'group_name', 'teacher_passport_id', 'teacher_full_name', 'mentor_passport_id', 'mentor_full_name', 'status', 'start_date', 'end_date', 'group_salary_for_teacher', 'per_student_salary_for_teacher', 'created_at', 'updated_at']
     list_filter = ['status', 'start_date', 'end_date', 'created_at', 'updated_at']
     search_fields = ['group_name', 'teacher_passport_id', 'teacher_full_name', 'mentor_passport_id', 'mentor_full_name']
     ordering = ['group_name']
