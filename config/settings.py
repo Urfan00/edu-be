@@ -189,6 +189,17 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    # 'https://shrf.az',
+    # 'https://www.shrf.az'
+]
+
+# CSRF_TRUSTED_ORIGINS = [
+#     'https://neymanacademy.shop',
+#     'https://www.neymanacademy.shop',
+# ]
+
 AUTH_USER_MODEL = "identity.User"
 
 AUTHENTICATION_BACKENDS = [
