@@ -125,8 +125,7 @@ class UserBulkUploadView(generics.CreateAPIView):
                 'github': self.validate_url(row.get('github')),
                 'youtube': self.validate_url(row.get('youtube')),
                 'linkedin': self.validate_url(row.get('linkedin')),
-                'address': row.get('address', None),
-                'group': row.get('group', None)
+                'address': row.get('address', None)
             }
 
             roles = row.get('roles', '')
@@ -135,31 +134,6 @@ class UserBulkUploadView(generics.CreateAPIView):
                 # Fetch roles based on name and convert to IDs
                 role_objects = Role.objects.filter(name__in=role_names)
                 user_data['roles'] = [role.id for role in role_objects]
-
-            if user_data['user_type'] == 'student':
-                group_name = user_data['group']
-                if not group_name:
-                    errors.append(f"Row {index + 1}: Group is required for students.")
-                    continue
-
-                try:
-                    group = Group.objects.get(group_name=group_name)
-                    user_data['group'] = group.id
-
-                    serializer = UserCreateUpdateSerializer(data=user_data)
-                    try:
-                        serializer.is_valid(raise_exception=True)
-                        users_to_create.append(user_data)
-                    except ValidationError as ve:
-                        errors.append(f"Row {index + 1}: {str(ve)}")
-                    except Exception as e:
-                        errors.append(f"Row {index + 1}: {str(e)}")
-
-                except ObjectDoesNotExist:
-                    errors.append(f"Row {index + 1}: Group '{group_name}' does not exist.")
-                    continue
-            else:
-                user_data['group'] = None
 
         # Return the response with errors (if any) and the list of created users
         if errors:
