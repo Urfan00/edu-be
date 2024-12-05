@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from .views import (
-    PurposeViewSet, SourceOfInformationViewSet, UniversityViewSet, 
+    PurposeViewSet, RegisterInformationDataListAPIView, SourceOfInformationViewSet, UniversityViewSet, 
     FilialViewSet, RegionViewSet, ProgramViewSet, RegisterViewSet
 )
 
@@ -19,4 +19,5 @@ router.register(r'registers', RegisterViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('register_information_data/', RegisterInformationDataListAPIView.as_view(), name='register_information_data'),
 ]

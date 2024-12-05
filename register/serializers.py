@@ -134,3 +134,29 @@ class RegisterUpdateSerializer(serializers.ModelSerializer):
             )
 
         return instance
+
+
+class RegisterInformationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = None  # To be set dynamically
+        fields = ('id', 'name')
+
+
+def get_dynamic_serializer(model):
+    """
+    Dynamically create a serializer for the given model.
+    """
+    # Dynamically create the Meta class
+    meta_class = type('Meta', (object,), {
+        'model': model,
+        'fields': ('id', 'name'),
+    })
+
+    # Dynamically create the serializer class
+    dynamic_serializer_class = type(
+        'DynamicSerializer',
+        (serializers.ModelSerializer,),
+        {'Meta': meta_class}
+    )
+
+    return dynamic_serializer_class
